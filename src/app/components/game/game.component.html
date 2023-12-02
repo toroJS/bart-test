@@ -1,6 +1,22 @@
 <p>game</p>
-{{ balloonHeight$ | async }}
-{{ balloonWidth$ | async }}
-<button (click)="pumpBalloon()">Pump</button>
+<div>total points {{ totalPoints$ | async }}</div>
+<div *ngIf="gameEnd$ | async; else game">The Game is Over.</div>
 
-{{ burts$ | async }}
+<ng-template #game>
+  <div>round {{ round$ | async }}</div>
+
+  <div>Balloon size {{ balloonSize$ | async }}</div>
+
+  <button *ngIf="!(burts$ | async)" (click)="pumpBalloon()">Pump</button>
+
+  <button
+    *ngIf="!(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0"
+    (click)="collectPoints()"
+  >
+    Collect points
+  </button>
+
+  <button *ngIf="burts$ | async" (click)="nextRound()">next round</button>
+
+  <div>Exploded: {{ burts$ | async }}</div>
+</ng-template>

@@ -10,14 +10,23 @@ import { CommonModule } from '@angular/common';
   styleUrl: './game.component.scss',
 })
 export class GameComponent {
-  balloonHeight$ = this.gameService.balloonHeight$;
-  balloonWidth$ = this.gameService.balloonWidth$;
+  round$ = this.gameService.round$;
+  gameEnd$ = this.gameService.gameEnd$;
+  balloonSize$ = this.gameService.balloonSize$;
+  totalPoints$ = this.gameService.totalPoints$;
   burts$ = this.gameService.burst$;
 
   constructor(private gameService: GameService) {}
 
   pumpBalloon() {
-    const pumpStrength = Math.random();
-    this.gameService.pumpBalloon(pumpStrength);
+    this.gameService.pumpBalloon();
+  }
+
+  collectPoints() {
+    this.gameService.collectPoints();
+  }
+
+  nextRound() {
+    this.gameService.nextRound();
   }
 }
