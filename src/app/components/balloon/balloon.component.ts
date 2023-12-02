@@ -35,7 +35,6 @@ import confetti from 'canvas-confetti';
         position: relative;
         width: 300px;
         height: 300px;
-        background: #ccffdd;
       }
       .shadowCanvas,
       .balloonCanvas,
@@ -116,7 +115,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private mainColor = '#ea173a';
   private shadowColor = '#750B1D';
   private threadColor = '#636';
-  private backgroundShadowColor = '#99BFA5';
+  private backgroundShadowColor = '#C9C9CA';
   // Dimensions
   private balloonDiameter = 80;
   private growthFactor = 1.05;
