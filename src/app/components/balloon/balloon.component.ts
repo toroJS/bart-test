@@ -8,7 +8,13 @@ import {
   OnDestroy,
   ViewEncapsulation,
 } from '@angular/core';
-import { BehaviorSubject, Subject, takeUntil, withLatestFrom } from 'rxjs';
+import {
+  BehaviorSubject,
+  Subject,
+  combineLatest,
+  debounceTime,
+  takeUntil,
+} from 'rxjs';
 import Zdog from 'zdog';
 import confetti from 'canvas-confetti';
 
@@ -103,6 +109,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private shadowAnchor!: Zdog.Anchor;
   private growStream$ = new BehaviorSubject<number>(0);
   private burstStream$ = new BehaviorSubject<boolean>(false);
+  private textStream$ = new Subject<string>();
   private destroy$ = new Subject<void>();
 
   // Color
@@ -277,29 +284,52 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleBalloonState(): void {
-    this.growStream$
-      .pipe(withLatestFrom(this.burstStream$), takeUntil(this.destroy$))
+    combineLatest([this.growStream$, this.burstStream$])
+      .pipe(takeUntil(this.destroy$))
       .subscribe(([size, burst]) => {
-        let newScale = Math.pow(this.growthFactor, size - 1);
-        this.shadowAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
-        this.balloonAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
+        this.updateBalloonSize(size);
 
-        console.log(size, burst);
         if (this.newRound) {
-          this.balloonCanvas.addChild(this.balloonAnchor);
-          this.shadowCanvas.addChild(this.shadowAnchor);
+          this.addBalloonToCanvas();
           this.newRound = false;
-        }
-        if (burst) {
-          this.balloonAnchor.remove();
-          this.shadowAnchor.remove();
-          this.shootParticles();
-          this.textAnimation(`💸`);
-          this.newRound = true;
         } else {
-          this.textAnimation(`🪙 ${size}`);
+          this.handleBurstOrGrow(burst, size);
         }
       });
+    this.textStream$
+      .pipe(debounceTime(200), takeUntil(this.destroy$))
+      .subscribe((str) => this.textAnimation(str));
+  }
+
+  private updateBalloonSize(size: number): void {
+    const newScale = Math.pow(this.growthFactor, size - 1);
+    this.setAnchorScale(this.shadowAnchor, newScale);
+    this.setAnchorScale(this.balloonAnchor, newScale);
+  }
+
+  private setAnchorScale(anchor: Zdog.Anchor, scale: number): void {
+    anchor.scale.set({ x: scale, y: scale, z: scale });
+  }
+
+  private addBalloonToCanvas(): void {
+    this.balloonCanvas.addChild(this.balloonAnchor);
+    this.shadowCanvas.addChild(this.shadowAnchor);
+  }
+
+  private removeBalloonFromCanvas(): void {
+    this.balloonAnchor.remove();
+    this.shadowAnchor.remove();
+  }
+
+  private handleBurstOrGrow(burst: boolean, size: number): void {
+    if (burst) {
+      this.removeBalloonFromCanvas();
+      this.shootParticles();
+      this.textStream$.next('💸');
+      this.newRound = true;
+    } else {
+      this.textStream$.next(`💲 ${size}`);
+    }
   }
 
   private shootParticles() {
