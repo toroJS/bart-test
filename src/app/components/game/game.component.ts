@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { GameService } from './game.service';
 import { CommonModule } from '@angular/common';
+import { BalloonComponent } from '../balloon/balloon.component';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
+  imports: [CommonModule, BalloonComponent],
 })
 export class GameComponent {
   round$ = this.gameService.round$;

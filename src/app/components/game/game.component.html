@@ -1,8 +1,12 @@
 <p>game</p>
+
 <div>total points {{ totalPoints$ | async }}</div>
 <div *ngIf="gameEnd$ | async; else game">The Game is Over.</div>
 
 <ng-template #game>
+
+  <app-balloon [size]="((balloonSize$ | async) ?? 1)" [burst]="((burts$ | async) ?? false)"></app-balloon>
+
   <div>round {{ round$ | async }}</div>
 
   <div>Balloon size {{ balloonSize$ | async }}</div>
@@ -20,3 +24,5 @@
 
   <div>Exploded: {{ burts$ | async }}</div>
 </ng-template>
+
+
