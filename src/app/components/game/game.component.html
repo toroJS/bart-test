@@ -1,28 +1,32 @@
 <p>game</p>
 
 <div>total points {{ totalPoints$ | async }}</div>
-<div *ngIf="gameEnd$ | async; else game">The Game is Over.</div>
 
-<ng-template #game>
-
-  <app-balloon [size]="((balloonSize$ | async) ?? 1)" [burst]="((burts$ | async) ?? false)"></app-balloon>
+<div>
+  <app-balloon
+    [size]="(balloonSize$ | async) ?? 1"
+    [burst]="(burts$ | async) ?? false"
+  ></app-balloon>
 
   <div>round {{ round$ | async }}</div>
 
   <div>Balloon size {{ balloonSize$ | async }}</div>
 
-  <button *ngIf="!(burts$ | async)" (click)="pumpBalloon()">Pump</button>
-
-  <button
-    *ngIf="!(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0"
-    (click)="collectPoints()"
-  >
-    Collect points
+  @if(gameEnd$ | async) {
+  <h1>game finished</h1>
+  } @else { @if( !(burts$ | async) ) {
+  <button mat-flat-button color="primary" (click)="pumpBalloon()">
+    🎈 Pump
   </button>
-
-  <button *ngIf="burts$ | async" (click)="nextRound()">next round</button>
+  } @if( !(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0) {
+  <button mat-flat-button color="primary" (click)="collectPoints()">
+    💰 Collect points
+  </button>
+  } @if( (burts$ | async)) {
+  <button mat-flat-button color="primary" (click)="nextRound()">
+    Next round
+  </button>
+  } }
 
   <div>Exploded: {{ burts$ | async }}</div>
-</ng-template>
-
-
+</div>
