@@ -56,7 +56,7 @@ import confetti from 'canvas-confetti';
       }
       .textCanvas > p {
         padding-right: 18px;
-        font-size: 50px;
+        font-size: 70px;
         font-weight: bold;
         color: black;
         font-family: 'sans-serif';
