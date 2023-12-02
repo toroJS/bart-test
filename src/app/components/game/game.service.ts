@@ -11,6 +11,7 @@ export interface gameStats {
   providedIn: 'root',
 })
 export class GameService {
+  user: string = '';
   maxSize = 29;
   maxRound = 2; // for testing real maxrounds 20
 

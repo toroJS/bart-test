@@ -1,0 +1,14 @@
+<p>home works!</p>
+<mat-form-field class="example-form-field">
+  <mat-label>Name</mat-label>
+  <input matInput type="text" [(ngModel)]="username" />
+  @if (username) {
+  <button matSuffix mat-icon-button aria-label="Clear" (click)="username = ''">
+    <mat-icon>close</mat-icon>
+  </button>
+  }
+</mat-form-field>
+@if (username) {
+<button mat-flat-button color="primary" (click)="saveUser()">Confirm</button>
+
+}
