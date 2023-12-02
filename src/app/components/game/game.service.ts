@@ -55,7 +55,7 @@ export class GameService {
   private roundSubject$ = new BehaviorSubject<number>(1);
   round$ = this.roundSubject$.asObservable();
 
-  private balloonSizeSubject = new BehaviorSubject<number>(1);
+  private balloonSizeSubject = new BehaviorSubject<number>(0);
   balloonSize$ = this.balloonSizeSubject.asObservable();
 
   private burstSubject = new BehaviorSubject<boolean>(false);

@@ -26,6 +26,8 @@ export class GameComponent {
   }
 
   collectPoints() {
+    alert('points collected');
+
     this.gameService.collectPoints();
   }
 
