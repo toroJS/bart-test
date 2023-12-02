@@ -1,13 +1,20 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, tap } from 'rxjs';
+import { DataService } from '../../data/data.service';
+
+export interface gameStats {
+  clicks: number;
+  bursted: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
   maxSize = 29;
-  maxRound = 3; // for testing real maxrounds 20
+  maxRound = 2; // for testing real maxrounds 20
 
+  savedGameStats: gameStats[] = [];
   sizeExplosionChance = new Map<number, number>([
     [1, 0.0333],
     [2, 0.066],
@@ -54,7 +61,15 @@ export class GameService {
   burst$ = this.burstSubject.asObservable();
 
   private gameEndSubject$ = new BehaviorSubject<boolean>(false);
-  gameEnd$ = this.gameEndSubject$.asObservable();
+  gameEnd$ = this.gameEndSubject$.asObservable().pipe(
+    tap((end) => {
+      if (end) {
+        this.dataService.saveUserResults('someuser', this.savedGameStats);
+      }
+    })
+  );
+
+  constructor(private dataService: DataService) {}
 
   pumpBalloon() {
     this.balloonSizeSubject.next(this.balloonSizeSubject.value + 1);
@@ -73,6 +88,13 @@ export class GameService {
     if (bursted) {
       this.burstSubject.next(true);
       if (this.roundSubject$.value === this.maxRound) {
+        this.savedGameStats.push({
+          clicks: this.balloonSizeSubject.value,
+          bursted: this.burstSubject.value,
+        });
+
+        console.log(this.savedGameStats);
+
         this.gameEndSubject$.next(true);
       }
       return;
@@ -83,7 +105,14 @@ export class GameService {
     this.totalPointsSubject$.next(
       this.totalPointsSubject$.value + this.balloonSizeSubject.value
     );
+
     if (this.roundSubject$.value === this.maxRound) {
+      this.savedGameStats.push({
+        clicks: this.balloonSizeSubject.value,
+        bursted: this.burstSubject.value,
+      });
+
+      console.log(this.savedGameStats);
       this.gameEndSubject$.next(true);
       return;
     }
@@ -91,6 +120,10 @@ export class GameService {
   }
 
   nextRound() {
+    this.savedGameStats.push({
+      clicks: this.balloonSizeSubject.value,
+      bursted: this.burstSubject.value,
+    });
     this.resetBalloon();
     this.roundSubject$.next(this.roundSubject$.value + 1);
   }
