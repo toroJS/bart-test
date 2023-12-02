@@ -6,8 +6,9 @@ import {
   ChangeDetectionStrategy,
   Input,
   OnDestroy,
+  ViewEncapsulation,
 } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil, withLatestFrom } from 'rxjs';
 import Zdog from 'zdog';
 import confetti from 'canvas-confetti';
 
@@ -15,27 +16,25 @@ import confetti from 'canvas-confetti';
   selector: 'app-balloon',
   standalone: true,
   template: `
-    <div class="canvas-wrapper">
-      <canvas #shadowCanvas class="shadow-canvas"></canvas>
-      <canvas #ballonCanvas class="balloon-canvas"></canvas>
-      <canvas #canvasConfetti class="confetti-canvas"></canvas>
+    <div class="canvasWrapper">
+      <canvas #shadowCanvas class="shadowCanvas"></canvas>
+      <canvas #ballonCanvas class="balloonCanvas"></canvas>
+      <canvas #confettiCanvas class="confettiCanvas"></canvas>
+      <div #textCanvas class="textCanvas"></div>
     </div>
   `,
   styles: [
     `
-      .canvas-wrapper {
+      .canvasWrapper {
         position: relative;
         width: 300px;
         height: 300px;
         background: #ccffdd;
       }
-      .shadow-canvas {
-        position: relative;
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-      .balloon-canvas {
+      .shadowCanvas,
+      .balloonCanvas,
+      .confettiCanvas,
+      .textCanvas {
         position: absolute;
         top: 0;
         left: 0;
@@ -43,45 +42,67 @@ import confetti from 'canvas-confetti';
         width: 100%;
         height: 100%;
       }
-      .confetti-canvas {
+      .textCanvas {
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+      }
+      .textCanvas > p {
+        padding-right: 18px;
+        font-size: 20px;
+        font-weight: bold;
+        color: black;
+        font-family: 'sans-serif';
+      }
+      @keyframes moneyAnimation {
+        0% {
+          opacity: 1;
+          bottom: 0;
+        }
+        100% {
+          opacity: 0;
+          bottom: 20%;
+        }
+      }
+      .moneyAnimation {
+        animation: moneyAnimation 1s forwards;
         position: absolute;
-        top: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
 })
 export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set size(size: number) {
     this.growStream$.next(size);
   }
   @Input() public set burst(burst: boolean) {
-    console.log(burst);
     this.burstStream$.next(burst);
   }
   @ViewChild('shadowCanvas')
   private shadowCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('ballonCanvas')
   private balloonCanvasRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('canvasConfetti')
+  @ViewChild('confettiCanvas')
   private canvasConfettiRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('textCanvas')
+  private textCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   private readonly TAU = Zdog.TAU;
   private readonly cycleCount = 180;
+  private newRound = false;
   private ticker = 0;
   private isSpinning = true;
   private balloonCanvas!: Zdog.Illustration;
   private shadowCanvas!: Zdog.Illustration;
+  private textCanvas!: Zdog.Illustration;
   private explosionCanvas!: any;
   private balloonAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
-  private growStream$ = new Subject<number>();
-  private burstStream$ = new Subject<boolean>();
+  private growStream$ = new BehaviorSubject<number>(0);
+  private burstStream$ = new BehaviorSubject<boolean>(false);
   private destroy$ = new Subject<void>();
 
   // Color
@@ -256,26 +277,28 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleBalloonState(): void {
-    // --- Handle Burst ---
-    this.burstStream$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((burst: boolean) => {
+    this.growStream$
+      .pipe(withLatestFrom(this.burstStream$), takeUntil(this.destroy$))
+      .subscribe(([size, burst]) => {
+        let newScale = Math.pow(this.growthFactor, size - 1);
+        this.shadowAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
+        this.balloonAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
+
+        console.log(size, burst);
+        if (this.newRound) {
+          this.balloonCanvas.addChild(this.balloonAnchor);
+          this.shadowCanvas.addChild(this.shadowAnchor);
+          this.newRound = false;
+        }
         if (burst) {
           this.balloonAnchor.remove();
           this.shadowAnchor.remove();
           this.shootParticles();
+          this.textAnimation(`💸`);
+          this.newRound = true;
         } else {
-          this.balloonCanvas.addChild(this.balloonAnchor);
-          this.shadowCanvas.addChild(this.shadowAnchor);
+          this.textAnimation(`🪙 ${size}`);
         }
-      });
-    // --- Handle Growth ---
-    this.growStream$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((size: number) => {
-        let newScale = Math.pow(this.growthFactor, size - 1);
-        this.shadowAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
-        this.balloonAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
       });
   }
 
@@ -289,6 +312,13 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       particleCount: 50,
       shapes: ['circle'],
     });
+  }
+
+  private textAnimation(char: string): void {
+    const moneyAnimation = document.createElement('p');
+    moneyAnimation.innerHTML = char;
+    this.textCanvasRef.nativeElement.appendChild(moneyAnimation);
+    moneyAnimation.classList.add('moneyAnimation'); // Add the class that animates
   }
 
   private interpolateKeyframes(
