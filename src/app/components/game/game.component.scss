@@ -1,0 +1,17 @@
+.mobile-layout {
+  display: grid;
+  grid-template-rows: 1fr auto; /* 1fr for content, auto for buttons */
+  height: 100%;
+}
+
+.content {
+  position: relative;
+}
+
+.buttons {
+  position: absolute;
+  bottom: 15px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns, each taking half of the width */
+}
