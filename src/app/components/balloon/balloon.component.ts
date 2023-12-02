@@ -33,8 +33,10 @@ import confetti from 'canvas-confetti';
     `
       .canvasWrapper {
         position: relative;
-        width: 300px;
-        height: 300px;
+        width: 100%;
+        height: 100%;
+        min-width: 300px;
+        min-height: 300px;
       }
       .shadowCanvas,
       .balloonCanvas,
@@ -49,12 +51,12 @@ import confetti from 'canvas-confetti';
       }
       .textCanvas {
         display: flex;
-        justify-content: flex-end;
-        align-items: flex-end;
+        justify-content: flex-start;
+        align-items: flex-start;
       }
       .textCanvas > p {
         padding-right: 18px;
-        font-size: 20px;
+        font-size: 50px;
         font-weight: bold;
         color: black;
         font-family: 'sans-serif';
@@ -198,7 +200,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     // --- Build Balloon ---
     this.balloonAnchor = new Zdog.Anchor({
       addTo: this.balloonCanvas,
-      translate: { x: 0, y: 0 },
+      translate: { x: 0, y: -this.balloonDiameter },
     });
     new Zdog.Hemisphere({
       diameter: this.balloonDiameter,
@@ -327,7 +329,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       this.textStream$.next('💸');
       this.newRound = true;
     } else {
-      this.textStream$.next(`💲 ${size}`);
+      this.textStream$.next(`🌬️`);
     }
   }
 

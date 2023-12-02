@@ -1,57 +1,42 @@
-<div class="mobile-layout">
-  <div class="content">
-    <p>game</p>
+<div class="gameWrapper">
 
-    <div>total points {{ totalPoints$ | async }}</div>
+  <mat-card class="gameScorecard">
+    <mat-card-header class="gameScore">
+        <!-- TODO: Add user name -->
+        <mat-card-subtitle>Username</mat-card-subtitle>
+        <div>
+          <strong>TOTAL: (💰 {{ totalPoints$ | async }})</strong>
+          @if(!(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0){
+            <span style="color: green;"> + {{ balloonSize$ | async }}</span>
+          }
+        </div>
+    </mat-card-header>
+    <mat-card-footer>
+      <!-- TODO: Correctly show progress, we need to calculate current round vs total and put that in a range of 0 to 100-->
+      <mat-progress-bar mode="determinate" value="{{ round$ | async }}"></mat-progress-bar>
+    </mat-card-footer>
+  </mat-card>
 
-    <div>
-      <app-balloon
-        [size]="(balloonSize$ | async) ?? 1"
-        [burst]="(burts$ | async) ?? false"
-      ></app-balloon>
+  <app-balloon
+    [size]="(balloonSize$ | async) ?? 1"
+    [burst]="(burts$ | async) ?? false"
+  ></app-balloon>
 
-      <div>round {{ round$ | async }}</div>
-
-      <div>Balloon size {{ balloonSize$ | async }}</div>
-
-      <!-- @if(gameEnd$ | async) {
+  <div class="gameActions">
+    @if(gameEnd$ | async) {
       <h1>game finished</h1>
       } @else { @if( !(burts$ | async) ) {
-      <button mat-flat-button color="primary" (click)="pumpBalloon()">
-        🎈 Pump
+      <button mat-flat-button color="primary" style="width: 48%;" (click)="pumpBalloon()">
+        Inflate
       </button>
       } @if( !(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0) {
-      <button mat-flat-button color="primary" (click)="collectPoints()">
-        💰 Collect points
-      </button>
-      } @if( (burts$ | async)) {
-      <button mat-flat-button color="primary" (click)="nextRound()">
-        Next round
-      </button>
-      } } -->
-
-      <div>Exploded: {{ burts$ | async }}</div>
-    </div>
-    <div class="buttons">
-      @if(gameEnd$ | async) {
-      <h1>game finished</h1>
-      } @else { @if( !(burts$ | async) ) {
-      <button mat-flat-button color="primary" (click)="pumpBalloon()">
-        🎈 Pump
-      </button>
-      } @if( !(burts$ | async) && ((balloonSize$ | async) ?? 0) > 0) {
-      <button mat-flat-button color="primary" (click)="collectPoints()">
-        💰 Collect points
+      <button mat-flat-button color="accent" style="width: 48%;" (click)="collectPoints()">
+        Collect <strong> (+ {{ balloonSize$ | async }})</strong>
       </button>
       } @if( (burts$ | async)) {
       <button mat-flat-button color="primary" (click)="nextRound()">
         Next round
       </button>
       } }
-      <!-- <button mat-button color="primary">Button 1</button>
-      <button mat-button color="accent">Button 2</button> -->
-    </div>
   </div>
-
-  <!-- Bottom buttons -->
 </div>
