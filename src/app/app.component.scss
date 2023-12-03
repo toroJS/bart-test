@@ -4,4 +4,6 @@
     padding: 18px;
     box-sizing: border-box;
     background-color: #fcfcfd;
+    --white-grad-1: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);
+    background: var(--white-grad-1);
 }

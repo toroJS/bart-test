@@ -7,13 +7,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { BehaviorSubject, delay } from 'rxjs';
-import { Subject, debounceTime, map, takeUntil, tap } from 'rxjs';
+import { Subject, map, takeUntil, tap } from 'rxjs';
 import { AUDIO, AudioService } from '../audio/audio.service';
+import { MatChipsModule } from '@angular/material/chips';
+import { Router } from '@angular/router';
 
 enum ACTION {
   PUMP = 'pump',
   COLLECT = 'collect',
   NEXT_ROUND = 'next_round',
+  FINISH = 'finish',
 }
 
 @Component({
@@ -28,6 +31,7 @@ enum ACTION {
     BalloonComponent,
     MatProgressBarModule,
     MatCardModule,
+    MatChipsModule,
   ],
 })
 export class GameComponent implements OnDestroy {
@@ -64,7 +68,8 @@ export class GameComponent implements OnDestroy {
 
   constructor(
     private gameService: GameService,
-    private audioService: AudioService
+    private audioService: AudioService,
+    private router: Router
   ) {
     this.totalRounds = this.gameService.maxRound;
   }
@@ -89,7 +94,9 @@ export class GameComponent implements OnDestroy {
             this.emotionSubject.next('new');
             this.nextRound();
             break;
-
+          case ACTION.FINISH:
+            this.router.navigate(['/results']);
+            break;
           default:
             break;
         }

@@ -3,13 +3,13 @@
     <mat-card-header class="gameScore">
       <!-- TODO: Add user name -->
       <mat-card-subtitle>Round: {{ round$ | async }}/{{ totalRounds }}</mat-card-subtitle>
-      <div>
-        <strong>TOTAL: (💰 {{ totalPoints$ | async }})</strong>
+      <mat-chip>
+        <strong>💰 {{ totalPoints$ | async }}</strong>
         @if(!(burts$ | async) && !(gameEnd$ | async) && ((balloonSize$ | async)
         ?? 0) > 0){
         <span style="color: green"> + {{ balloonSize$ | async }}</span>
         }
-      </div>
+      </mat-chip>
     </mat-card-header>
     <mat-card-footer>
       <!-- TODO: Correctly show progress, we need to calculate current round vs total and put that in a range of 0 to 100-->
@@ -27,7 +27,14 @@
 
   <div class="gameActions">
     @if(gameEnd$ | async) {
-    <h1>game finished</h1>
+      <button
+      mat-flat-button
+      color="primary"
+      style="width: 100%"
+      (click)="onButtonClick(ACTIONTYPE.FINISH)"
+    >
+      See results
+    </button>
     } @else if(roundEnd$ | async){
     <button
       [disabled]="disable"

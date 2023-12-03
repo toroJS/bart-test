@@ -11,6 +11,7 @@ import { HomeComponent } from './components/home/home.component';
 import { GameService } from './components/game/game.service';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { ResultsComponent } from './components/results/results.component';
 
 const userGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot,
@@ -35,6 +36,11 @@ export const routes: Routes = [
   {
     path: 'game',
     component: GameComponent,
+    canActivate: [userGuard],
+  },
+  {
+    path: 'results',
+    component: ResultsComponent,
     canActivate: [userGuard],
   },
 ];
