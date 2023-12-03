@@ -6,10 +6,7 @@ import {
   Timestamp,
   addDoc,
   collection,
-  doc,
-  getDocs,
   getFirestore,
-  setDoc,
 } from 'firebase/firestore';
 import { gameStats } from '../components/game/game.service';
 
@@ -25,12 +22,10 @@ export class DataService {
   }
 
   async saveUserResults(username: string, score: gameStats[]) {
-    console.log('save user stats');
-
-    // await addDoc(collection(this.db, 'results'), {
-    //   createdAt: Timestamp.fromDate(new Date()),
-    //   score: score,
-    //   user: username,
-    // });
+    await addDoc(collection(this.db, 'results'), {
+      createdAt: Timestamp.fromDate(new Date()),
+      score: score,
+      user: username,
+    });
   }
 }
