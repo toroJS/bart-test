@@ -10,13 +10,20 @@ import {
 } from '@angular/core';
 import {
   BehaviorSubject,
+  Observable,
   Subject,
   combineLatest,
-  debounceTime,
   takeUntil,
 } from 'rxjs';
 import Zdog from 'zdog';
 import confetti from 'canvas-confetti';
+
+export type BalloonEmotion =
+  | 'collect'
+  | 'inflate'
+  | 'explode'
+  | 'new'
+  | 'empty';
 
 @Component({
   selector: 'app-balloon',
@@ -87,6 +94,10 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set burst(burst: boolean) {
     this.burstStream$.next(burst);
   }
+  @Input() public set emotion(es: Observable<BalloonEmotion>) {
+    //console.log(type);
+    this.emotionStream$ = es;
+  }
   @ViewChild('shadowCanvas')
   private shadowCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('ballonCanvas')
@@ -110,7 +121,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private shadowAnchor!: Zdog.Anchor;
   private growStream$ = new BehaviorSubject<number>(0);
   private burstStream$ = new BehaviorSubject<boolean>(false);
-  private textStream$ = new Subject<string>();
+  private emotionStream$ = new Observable<BalloonEmotion>();
   private destroy$ = new Subject<void>();
 
   // Color
@@ -152,6 +163,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.drawIllustration();
     this.startAnimation();
     this.handleBalloonState();
+    this.handleEmotionState();
   }
 
   ngOnDestroy(): void {
@@ -181,7 +193,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private handleResize(width: number, height: number): void {
     const displaySize = Math.min(width, height);
     const zoom = Math.floor(displaySize / 300);
-    // this.illo.zoom = zoom;
   }
 
   private drawIllustration(): void {
@@ -297,9 +308,12 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
           this.handleBurstOrGrow(burst, size);
         }
       });
-    this.textStream$
-      .pipe(debounceTime(200), takeUntil(this.destroy$))
-      .subscribe((str) => this.textAnimation(str));
+  }
+
+  private handleEmotionState(): void {
+    this.emotionStream$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type) => this.showEmotion(type));
   }
 
   private updateBalloonSize(size: number): void {
@@ -315,6 +329,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private addBalloonToCanvas(): void {
     this.balloonCanvas.addChild(this.balloonAnchor);
     this.shadowCanvas.addChild(this.shadowAnchor);
+    // this.textStream$.next('new');
   }
 
   private removeBalloonFromCanvas(): void {
@@ -326,10 +341,10 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     if (burst) {
       this.removeBalloonFromCanvas();
       this.shootParticles();
-      this.textStream$.next('💸');
+      // this.textStream$.next('explode');
       this.newRound = true;
     } else {
-      this.textStream$.next(`🌬️`);
+      // this.textStream$.next('inflate');
     }
   }
 
@@ -366,5 +381,25 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     });
 
     apply(interpolatedValue);
+  }
+
+  private showEmotion(type: BalloonEmotion) {
+    switch (type) {
+      case 'collect':
+        this.textAnimation('💰');
+        break;
+      case 'inflate':
+        this.textAnimation('🌬️');
+        break;
+      case 'explode':
+        this.textAnimation('😢');
+        break;
+      case 'new':
+        this.textAnimation('🎈');
+        break;
+      default:
+        this.textAnimation('');
+        break;
+    }
   }
 }

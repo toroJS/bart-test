@@ -1,11 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
 import { GameService } from './game.service';
 import { CommonModule } from '@angular/common';
-import { BalloonComponent } from '../balloon/balloon.component';
+import { BalloonComponent, BalloonEmotion } from '../balloon/balloon.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
+import { BehaviorSubject } from 'rxjs';
 import { Subject, debounceTime, map, takeUntil, tap } from 'rxjs';
 
 enum ACTION {
@@ -45,7 +46,13 @@ export class GameComponent implements OnDestroy {
   gameEnd$ = this.gameService.gameEnd$;
   balloonSize$ = this.gameService.balloonSize$;
   totalPoints$ = this.gameService.totalPoints$;
-  burts$ = this.gameService.burst$;
+  burts$ = this.gameService.burst$.pipe(
+    tap((burst) => {
+      if (burst) this.emotionSubject.next('explode');
+    })
+  );
+  emotionSubject = new BehaviorSubject<BalloonEmotion>('empty');
+  emotion$ = this.emotionSubject.asObservable();
   username = this.gameService.user;
 
   constructor(private gameService: GameService) {}
@@ -60,14 +67,17 @@ export class GameComponent implements OnDestroy {
       .subscribe((action: ACTION) => {
         switch (action) {
           case ACTION.PUMP:
+            this.emotionSubject.next('inflate');
             this.pumpBalloon();
             break;
 
           case ACTION.COLLECT:
+            this.emotionSubject.next('collect');
             this.collectPoints();
             break;
 
           case ACTION.NEXT_ROUND:
+            this.emotionSubject.next('new');
             this.nextRound();
             break;
 

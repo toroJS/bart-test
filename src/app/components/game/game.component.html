@@ -20,10 +20,15 @@
     </mat-card-footer>
   </mat-card>
 
-  <app-balloon
-    [size]="(balloonSize$ | async) ?? 1"
-    [burst]="(burts$ | async) ?? false"
-  ></app-balloon>
+  <div class="gameCanvas">
+    <h2>Round: {{ round$ | async }}</h2>
+    <app-balloon
+      [size]="(balloonSize$ | async) ?? 1"
+      [burst]="(burts$ | async) ?? false"
+      [emotion]="emotion$"
+    ></app-balloon>
+  </div>
+
 
   <div class="gameActions">
     @if(gameEnd$ | async) {
