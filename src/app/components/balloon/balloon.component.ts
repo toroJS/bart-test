@@ -113,6 +113,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private balloonAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
+  private currEmotion!: BalloonEmotion;
 
   private growStream$ = new BehaviorSubject<number>(0);
   private emotionStream$ = new Observable<BalloonEmotion>();
@@ -141,6 +142,11 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     { x: 1, y: 1 },
     { x: 1.2, y: 1.2 },
     { x: 1, y: 1 },
+  ];
+  private readonly fullRotateKeyframes = [
+    { x: 0, y: 0 },
+    { x: 0, y: this.TAU },
+    { x: 0, y: this.TAU },
   ];
   // Explosion
   private particlesDefaults = {
@@ -275,15 +281,27 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     const tween = Zdog.easeInOut(progress % 1, 4);
     const turn = Math.floor(progress % turnLimit);
 
-    this.interpolateKeyframes(this.rotateKeyframes, turn, tween, (value) =>
-      this.balloonAnchor.rotate.set(value)
-    );
+    if (this.currEmotion !== 'collect') {
+      this.interpolateKeyframes(this.rotateKeyframes, turn, tween, (value) =>
+        this.balloonAnchor.rotate.set(value)
+      );
+    } else {
+      this.interpolateKeyframes(
+        this.fullRotateKeyframes,
+        turn,
+        tween,
+        (value) => this.balloonAnchor.rotate.set(value)
+      );
+    }
+    // Animate bounce
     this.interpolateKeyframes(this.translateKeyframes, turn, tween, (value) =>
       this.balloonAnchor.translate.set(value)
     );
+    // Animate shadow
     this.interpolateKeyframes(this.scaleKeyframes, turn, tween, (value) =>
       this.shadow.scale.set(value)
     );
+
     this.ticker++;
   }
 
@@ -291,6 +309,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.emotionStream$
       .pipe(withLatestFrom(this.growStream$), takeUntil(this.destroy$))
       .subscribe(([emotion, size]) => {
+        this.currEmotion = emotion;
         this.updateBalloonSize(size);
         this.handleEmotion(emotion);
       });
@@ -338,10 +357,8 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleEmotion(emotion: BalloonEmotion) {
-    console.log(emotion);
     switch (emotion) {
       case 'collect':
-        this.removeBalloonFromCanvas();
         this.textAnimation('💰');
         break;
       case 'inflate':
@@ -353,8 +370,8 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
         this.textAnimation('😢');
         break;
       case 'new':
+        this.updateBalloonSize(0);
         this.addBalloonToCanvas();
-        this.textAnimation('🎈');
         break;
       default:
         this.textAnimation('');
