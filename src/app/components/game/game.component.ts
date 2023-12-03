@@ -6,8 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, delay } from 'rxjs';
 import { Subject, debounceTime, map, takeUntil, tap } from 'rxjs';
+import { AUDIO, AudioService } from '../audio/audio.service';
 
 enum ACTION {
   PUMP = 'pump',
@@ -48,15 +49,22 @@ export class GameComponent implements OnDestroy {
   balloonSize$ = this.gameService.balloonSize$;
   totalPoints$ = this.gameService.totalPoints$;
   burts$ = this.gameService.burst$.pipe(
+    delay(500),
     tap((burst) => {
-      if (burst) this.emotionSubject.next('explode');
+      if (burst) {
+        this.emotionSubject.next('explode');
+        this.audioService.playSound(AUDIO.BURST);
+      }
     })
   );
   emotionSubject = new BehaviorSubject<BalloonEmotion>('empty');
   emotion$ = this.emotionSubject.asObservable();
   username = this.gameService.user;
 
-  constructor(private gameService: GameService) {}
+  constructor(
+    private gameService: GameService,
+    private audioService: AudioService
+  ) {}
 
   ngOnInit() {
     this.clickSubject
@@ -99,10 +107,12 @@ export class GameComponent implements OnDestroy {
   }
 
   private pumpBalloon() {
+    this.audioService.playSound(AUDIO.INFLATE);
     this.gameService.pumpBalloon();
   }
 
   private collectPoints() {
+    this.audioService.playSound(AUDIO.COLLECT);
     this.gameService.collectPoints();
   }
 
