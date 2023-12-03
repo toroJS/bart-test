@@ -68,7 +68,7 @@ export class GameService {
   gameEnd$ = this.gameEndSubject$.asObservable().pipe(
     tap((end) => {
       if (end) {
-        this.dataService.saveUserResults('someuser', this.savedGameStats);
+        this.dataService.saveUserResults(this.user, this.savedGameStats);
       }
     })
   );
