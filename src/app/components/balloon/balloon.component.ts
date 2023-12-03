@@ -12,8 +12,8 @@ import {
   BehaviorSubject,
   Observable,
   Subject,
-  combineLatest,
   takeUntil,
+  withLatestFrom,
 } from 'rxjs';
 import Zdog from 'zdog';
 import confetti from 'canvas-confetti';
@@ -33,7 +33,7 @@ export type BalloonEmotion =
       <canvas #shadowCanvas class="shadowCanvas"></canvas>
       <canvas #ballonCanvas class="balloonCanvas"></canvas>
       <canvas #confettiCanvas class="confettiCanvas"></canvas>
-      <div #textCanvas class="textCanvas"></div>
+      <div #emotionCanvas class="emotionCanvas"></div>
     </div>
   `,
   styles: [
@@ -48,7 +48,7 @@ export type BalloonEmotion =
       .shadowCanvas,
       .balloonCanvas,
       .confettiCanvas,
-      .textCanvas {
+      .emotionCanvas {
         position: absolute;
         top: 0;
         left: 0;
@@ -56,12 +56,12 @@ export type BalloonEmotion =
         width: 100%;
         height: 100%;
       }
-      .textCanvas {
+      .emotionCanvas {
         display: flex;
         justify-content: flex-start;
         align-items: flex-start;
       }
-      .textCanvas > p {
+      .emotionCanvas > p {
         padding-right: 18px;
         font-size: 70px;
         font-weight: bold;
@@ -91,12 +91,8 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set size(size: number) {
     this.growStream$.next(size);
   }
-  @Input() public set burst(burst: boolean) {
-    this.burstStream$.next(burst);
-  }
-  @Input() public set emotion(es: Observable<BalloonEmotion>) {
-    //console.log(type);
-    this.emotionStream$ = es;
+  @Input() public set emotion(emotion$: Observable<BalloonEmotion>) {
+    this.emotionStream$ = emotion$;
   }
   @ViewChild('shadowCanvas')
   private shadowCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -104,23 +100,21 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private balloonCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('confettiCanvas')
   private canvasConfettiRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('textCanvas')
-  private textCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('emotionCanvas')
+  private emotionCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   private readonly TAU = Zdog.TAU;
   private readonly cycleCount = 180;
-  private newRound = false;
+
   private ticker = 0;
-  private isSpinning = true;
   private balloonCanvas!: Zdog.Illustration;
   private shadowCanvas!: Zdog.Illustration;
-  private textCanvas!: Zdog.Illustration;
   private explosionCanvas!: any;
   private balloonAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
+
   private growStream$ = new BehaviorSubject<number>(0);
-  private burstStream$ = new BehaviorSubject<boolean>(false);
   private emotionStream$ = new Observable<BalloonEmotion>();
   private destroy$ = new Subject<void>();
 
@@ -163,7 +157,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.drawIllustration();
     this.startAnimation();
     this.handleBalloonState();
-    this.handleEmotionState();
   }
 
   ngOnDestroy(): void {
@@ -277,7 +270,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateAnimation(): void {
-    if (!this.isSpinning) return;
     const turnLimit = this.rotateKeyframes.length - 1;
     const progress = this.ticker / this.cycleCount;
     const tween = Zdog.easeInOut(progress % 1, 4);
@@ -296,56 +288,18 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleBalloonState(): void {
-    combineLatest([this.growStream$, this.burstStream$])
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(([size, burst]) => {
-        this.updateBalloonSize(size);
-
-        if (this.newRound) {
-          this.addBalloonToCanvas();
-          this.newRound = false;
-        } else {
-          this.handleBurstOrGrow(burst, size);
-        }
-      });
-  }
-
-  private handleEmotionState(): void {
     this.emotionStream$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((type) => this.showEmotion(type));
+      .pipe(withLatestFrom(this.growStream$), takeUntil(this.destroy$))
+      .subscribe(([emotion, size]) => {
+        this.updateBalloonSize(size);
+        this.handleEmotion(emotion);
+      });
   }
 
   private updateBalloonSize(size: number): void {
     const newScale = Math.pow(this.growthFactor, size - 1);
     this.setAnchorScale(this.shadowAnchor, newScale);
     this.setAnchorScale(this.balloonAnchor, newScale);
-  }
-
-  private setAnchorScale(anchor: Zdog.Anchor, scale: number): void {
-    anchor.scale.set({ x: scale, y: scale, z: scale });
-  }
-
-  private addBalloonToCanvas(): void {
-    this.balloonCanvas.addChild(this.balloonAnchor);
-    this.shadowCanvas.addChild(this.shadowAnchor);
-    // this.textStream$.next('new');
-  }
-
-  private removeBalloonFromCanvas(): void {
-    this.balloonAnchor.remove();
-    this.shadowAnchor.remove();
-  }
-
-  private handleBurstOrGrow(burst: boolean, size: number): void {
-    if (burst) {
-      this.removeBalloonFromCanvas();
-      this.shootParticles();
-      // this.textStream$.next('explode');
-      this.newRound = true;
-    } else {
-      // this.textStream$.next('inflate');
-    }
   }
 
   private shootParticles() {
@@ -363,7 +317,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private textAnimation(char: string): void {
     const moneyAnimation = document.createElement('p');
     moneyAnimation.innerHTML = char;
-    this.textCanvasRef.nativeElement.appendChild(moneyAnimation);
+    this.emotionCanvasRef.nativeElement.appendChild(moneyAnimation);
     moneyAnimation.classList.add('moneyAnimation'); // Add the class that animates
   }
 
@@ -383,23 +337,42 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     apply(interpolatedValue);
   }
 
-  private showEmotion(type: BalloonEmotion) {
-    switch (type) {
+  private handleEmotion(emotion: BalloonEmotion) {
+    console.log(emotion);
+    switch (emotion) {
       case 'collect':
+        this.removeBalloonFromCanvas();
         this.textAnimation('💰');
         break;
       case 'inflate':
         this.textAnimation('🌬️');
         break;
       case 'explode':
+        this.removeBalloonFromCanvas();
+        this.shootParticles();
         this.textAnimation('😢');
         break;
       case 'new':
+        this.addBalloonToCanvas();
         this.textAnimation('🎈');
         break;
       default:
         this.textAnimation('');
         break;
     }
+  }
+
+  private setAnchorScale(anchor: Zdog.Anchor, scale: number): void {
+    anchor.scale.set({ x: scale, y: scale, z: scale });
+  }
+
+  private addBalloonToCanvas(): void {
+    this.balloonCanvas.addChild(this.balloonAnchor);
+    this.shadowCanvas.addChild(this.shadowAnchor);
+  }
+
+  private removeBalloonFromCanvas(): void {
+    this.balloonAnchor.remove();
+    this.shadowAnchor.remove();
   }
 }

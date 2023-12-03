@@ -24,7 +24,6 @@
     <h2>Round: {{ round$ | async }}</h2>
     <app-balloon
       [size]="(balloonSize$ | async) ?? 1"
-      [burst]="(burts$ | async) ?? false"
       [emotion]="emotion$"
     ></app-balloon>
   </div>
