@@ -110,6 +110,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private balloonCanvas!: Zdog.Illustration;
   private shadowCanvas!: Zdog.Illustration;
   private explosionCanvas!: any;
+
   private balloonAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
@@ -134,9 +135,9 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     { x: 0, y: 0 },
   ];
   private readonly translateKeyframes = [
-    { x: 0, y: -10 },
+    { x: 0, y: -20 },
     { x: 0, y: 10 },
-    { x: 0, y: -10 },
+    { x: 0, y: -20 },
   ];
   private readonly scaleKeyframes = [
     { x: 1, y: 1 },
@@ -210,7 +211,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     // --- Build Balloon ---
     this.balloonAnchor = new Zdog.Anchor({
       addTo: this.balloonCanvas,
-      translate: { x: 0, y: -this.balloonDiameter },
     });
     new Zdog.Hemisphere({
       diameter: this.balloonDiameter,

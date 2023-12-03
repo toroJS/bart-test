@@ -35,6 +35,7 @@ export class GameComponent implements OnDestroy {
   private clickSubject = new Subject<ACTION>();
   public ACTIONTYPE = ACTION;
   public disable = false;
+  public totalRounds: number = 0;
 
   round$ = this.gameService.round$;
   roundEnd$ = this.gameService.roundEnd$;
@@ -64,7 +65,9 @@ export class GameComponent implements OnDestroy {
   constructor(
     private gameService: GameService,
     private audioService: AudioService
-  ) {}
+  ) {
+    this.totalRounds = this.gameService.maxRound;
+  }
 
   ngOnInit() {
     this.clickSubject
