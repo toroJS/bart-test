@@ -68,12 +68,9 @@ export class GameComponent implements OnDestroy {
 
   ngOnInit() {
     this.clickSubject
-      .pipe(
-        tap(() => (this.disable = true)),
-        debounceTime(200)
-      )
       .pipe(takeUntil(this.destroy$))
       .subscribe((action: ACTION) => {
+        this.disable = true;
         switch (action) {
           case ACTION.PUMP:
             this.emotionSubject.next('inflate');
@@ -93,7 +90,9 @@ export class GameComponent implements OnDestroy {
           default:
             break;
         }
-        this.disable = false;
+        setTimeout(() => {
+          this.disable = false;
+        }, 180);
       });
   }
 
