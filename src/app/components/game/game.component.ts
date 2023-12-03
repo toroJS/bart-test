@@ -36,6 +36,7 @@ export class GameComponent implements OnDestroy {
   public disable = false;
 
   round$ = this.gameService.round$;
+  roundEnd$ = this.gameService.roundEnd$;
   progress$ = this.gameService.round$.pipe(
     map((round) => {
       const totalRounds = this.gameService.maxRound;

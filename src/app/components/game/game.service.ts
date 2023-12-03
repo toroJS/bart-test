@@ -61,6 +61,9 @@ export class GameService {
   private burstSubject = new BehaviorSubject<boolean>(false);
   burst$ = this.burstSubject.asObservable();
 
+  private roundEndSubject = new BehaviorSubject<boolean>(false);
+  roundEnd$ = this.roundEndSubject.asObservable();
+
   private gameEndSubject$ = new BehaviorSubject<boolean>(false);
   gameEnd$ = this.gameEndSubject$.asObservable().pipe(
     tap((end) => {
@@ -88,6 +91,7 @@ export class GameService {
 
     if (bursted) {
       this.burstSubject.next(true);
+      this.roundEndSubject.next(true);
       if (this.roundSubject$.value === this.maxRound) {
         this.savedGameStats.push({
           clicks: this.balloonSizeSubject.value,
@@ -117,10 +121,12 @@ export class GameService {
       this.gameEndSubject$.next(true);
       return;
     }
-    this.nextRound();
+    this.roundEndSubject.next(true);
   }
 
   nextRound() {
+    this.gameEndSubject$.next(false);
+    this.roundEndSubject.next(false);
     this.savedGameStats.push({
       clicks: this.balloonSizeSubject.value,
       bursted: this.burstSubject.value,
