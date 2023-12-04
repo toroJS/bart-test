@@ -233,8 +233,8 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     new Zdog.Ellipse({
       addTo: this.balloonAnchor,
       diameter: 10,
-      stroke: 5,
-      color: this.mainColor,
+      stroke: 7,
+      color: this.shadowColor,
       translate: { x: 0, y: this.balloonDiameter / 2 },
       rotate: { x: this.TAU / 4, y: 0, z: 0 },
     });
@@ -275,7 +275,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       addTo: this.mainAnchor,
     });
     this.shadow = new Zdog.Ellipse({
-      addTo: this.mainAnchor,
+      addTo: this.shadowAnchor,
       diameter: this.balloonDiameter - 15,
       fill: true,
       color: this.backgroundShadowColor,
