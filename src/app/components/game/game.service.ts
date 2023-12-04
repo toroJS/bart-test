@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { DataService } from '../../data/data.service';
+import { DataService, RankedPlayer } from '../../data/data.service';
 
 export interface gameStats {
   clicks: number;
@@ -12,6 +12,7 @@ export interface gameStats {
 })
 export class GameService {
   user: string = '';
+  savedUserId: string = '';
   maxSize = 31;
   maxRound = 3; // for testing real maxrounds 20
 
@@ -68,6 +69,9 @@ export class GameService {
 
   private gameEndSubject$ = new BehaviorSubject<boolean>(false);
   gameEnd$ = this.gameEndSubject$.asObservable();
+  // Observable<RankedPlayer[]>
+  private rankedDataSubject$ = new BehaviorSubject<RankedPlayer[]>([]);
+  rankedData$ = this.rankedDataSubject$.asObservable();
 
   constructor(private dataService: DataService) {}
 
@@ -143,7 +147,10 @@ export class GameService {
     const pointsPerRound = this.savedGameStats
       .filter((stats) => !stats.bursted)
       .map((stats) => stats.clicks);
-    const numberOfNonBurstedBalloons = pointsPerRound.length;
+    if (pointsPerRound.length === 0) {
+      return 0;
+    }
+    const numberOfNonBurstedBalloons = pointsPerRound.length ?? 0;
     const initialValue = 0;
     const sumWithInitial = pointsPerRound.reduce(
       (accumulator, currentValue) => accumulator + currentValue,
@@ -156,14 +163,28 @@ export class GameService {
   }
 
   saveStatsInDb() {
-    this.dataService.saveUserResults(
-      this.user,
-      this.getTotalScore(),
-      this.userAvarageScore(),
-      this.maxRound,
-      this.savedGameStats.filter((stats) => stats.bursted).length,
-      this.savedGameStats
-    );
+    this.dataService
+      .saveUserResults(
+        this.user,
+        this.getTotalScore(),
+        this.userAvarageScore(),
+        this.maxRound,
+        this.savedGameStats.filter((stats) => stats.bursted).length,
+        this.savedGameStats
+      )
+      .then((docRef) => {
+        this.dataService
+          .getTopScoresOfAllTime({
+            rank: '🏆',
+            userId: docRef.id,
+            user: this.user,
+            score: this.getTotalScore(),
+            avg: this.userAvarageScore(),
+            bursted: this.savedGameStats.filter((stats) => stats.bursted)
+              .length,
+          })
+          .subscribe((rankedData) => this.rankedDataSubject$.next(rankedData));
+      });
   }
 
   restartGame() {

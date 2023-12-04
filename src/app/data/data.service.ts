@@ -29,8 +29,9 @@ export interface Score {
 }
 
 export interface RankedPlayer {
-  rank: number;
+  rank: string;
   user: string;
+  userId: string;
   score: number;
   avg: number;
   bursted: number;
@@ -55,7 +56,7 @@ export class DataService {
     burstedBalloons: number,
     score: gameStats[]
   ) {
-    await addDoc(collection(this.db, 'results'), {
+    return await addDoc(collection(this.db, 'results'), {
       createdAt: Timestamp.fromDate(new Date()),
       totalScore: totalScore,
       avgScore: avgScore,
@@ -78,7 +79,9 @@ export class DataService {
     );
   }
 
-  getTopScoresOfAllTime() {
+  getTopScoresOfAllTime(userStats: RankedPlayer) {
+    console.log(userStats);
+
     const resultsCollection = collection(this.db, 'results');
     return from(
       getDocs(query(resultsCollection, orderBy('totalScore', 'desc'), limit(5)))
@@ -89,8 +92,10 @@ export class DataService {
         res.forEach((element) => {
           const { totalScore, avgScore, numberOfBurstedBalloons, user } =
             element.data();
+          const playerId = element.id;
           const player = {
-            rank: index,
+            rank: index.toString(),
+            userId: playerId,
             user: user,
             score: totalScore,
             avg: avgScore,
@@ -99,6 +104,14 @@ export class DataService {
           index = index + 1;
           results.push(player);
         });
+        console.log(results);
+        console.log();
+
+        if (
+          !results.map((player) => player.userId).includes(userStats.userId)
+        ) {
+          results.push(userStats);
+        }
         return results;
       })
     );

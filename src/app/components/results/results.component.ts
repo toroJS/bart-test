@@ -39,7 +39,7 @@ export class ResultsComponent implements AfterViewInit {
   totalRounds = this.gameService.maxRound;
   userAverageScore!: number;
   displayedColumns: string[] = ['rank', 'user', 'score', 'avg', 'bursted'];
-  dataSource = this.dataService.getTopScoresOfAllTime();
+  dataSource$ = this.gameService.rankedData$;
 
   @ViewChild('confettiCanvas')
   private canvasConfettiRef!: ElementRef<HTMLCanvasElement>;
