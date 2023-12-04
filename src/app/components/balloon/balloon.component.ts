@@ -355,7 +355,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
         break;
       case 'inflate':
         this.textAnimation('🌬️');
-        this.balloonInflateAnimation.play(0);
+        this.balloonInflateAnimation.duration(0.3).play(0);
         break;
       case 'explode':
         this.hideItemsInCanvas();
