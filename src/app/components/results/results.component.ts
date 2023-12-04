@@ -6,7 +6,7 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
-import { GameService, gameStats } from '../game/game.service';
+import { GameService } from '../game/game.service';
 import { DataService } from '../../data/data.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { BalloonComponent } from '../balloon/balloon.component';
 import { MatTableModule } from '@angular/material/table';
 import confetti from 'canvas-confetti';
+import { AUDIO, AudioService } from '../audio/audio.service';
 
 @Component({
   selector: 'app-results',
@@ -52,7 +53,8 @@ export class ResultsComponent implements AfterViewInit {
   constructor(
     private gameService: GameService,
     private dataService: DataService,
-    private router: Router
+    private router: Router,
+    private audioService: AudioService
   ) {
     this.user = gameService.user;
     const results = gameService.savedGameStats;
@@ -70,6 +72,7 @@ export class ResultsComponent implements AfterViewInit {
       resize: true,
       useWorker: true,
     });
+    this.audioService.playSound(AUDIO.CHEERS);
     confetti({
       particleCount: 100,
       spread: 70,

@@ -4,6 +4,7 @@ export enum AUDIO {
   BURST = 'burst',
   COLLECT = 'collect',
   INFLATE = 'inflate',
+  CHEERS = 'cheers',
 }
 
 @Injectable({
@@ -14,6 +15,7 @@ export class AudioService {
     [AUDIO.BURST, new Audio('assets/sounds/balloon-pop.mp3')],
     [AUDIO.COLLECT, new Audio('assets/sounds/collect.mp3')],
     [AUDIO.INFLATE, new Audio('assets/sounds/inflate.mp3')],
+    [AUDIO.CHEERS, new Audio('assets/sounds/cheers.mp3')],
   ]);
 
   constructor() {}
