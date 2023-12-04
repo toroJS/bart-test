@@ -2,11 +2,13 @@
   <mat-card class="gameScorecard">
     <mat-card-header class="gameScore">
       <!-- TODO: Add user name -->
-      <mat-card-subtitle>Round: {{ round$ | async }}/{{ totalRounds }}</mat-card-subtitle>
+      <mat-card-subtitle
+        >Round: {{ round$ | async }}/{{ totalRounds }}</mat-card-subtitle
+      >
       <mat-chip>
         <strong>💰 {{ totalPoints$ | async }}</strong>
-        @if(!(burts$ | async) && !(gameEnd$ | async) && ((balloonSize$ | async)
-        ?? 0) > 0){
+        @if(!(burts$ | async) && !(gameEnd$ | async) && !(roundEnd$ | async) &&
+        ((balloonSize$ | async) ?? 0) > 0){
         <span style="color: green"> + {{ balloonSize$ | async }}</span>
         }
       </mat-chip>
@@ -27,7 +29,7 @@
 
   <div class="gameActions">
     @if(gameEnd$ | async) {
-      <button
+    <button
       mat-flat-button
       color="primary"
       style="width: 100%"
