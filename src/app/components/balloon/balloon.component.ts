@@ -32,7 +32,7 @@ export type BalloonEmotion =
   selector: 'app-balloon',
   standalone: true,
   template: `
-    <div class="canvasWrapper">
+    <div #wrapper class="canvasWrapper" (window:resize)="handleResize()">
       <canvas #shadowCanvas class="shadowCanvas"></canvas>
       <canvas #ballonCanvas class="balloonCanvas"></canvas>
       <canvas #confettiCanvas class="confettiCanvas"></canvas>
@@ -45,13 +45,15 @@ export type BalloonEmotion =
 })
 export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set size(size: number) {
-    this.growStream$.next(size + 1); // Score starts at 0 but this is equivalent to the first size
+    this.growStream$.next(30 + 1); // Score starts at 0 but this is equivalent to the first size
   }
   @Input() public set emotion(emotion$: Observable<BalloonEmotion>) {
     this.emotionStream$ = emotion$;
   }
   @Output() public animationInProgress$ = new EventEmitter<boolean>();
 
+  @ViewChild('wrapper')
+  private wrapperRef!: ElementRef<HTMLElement>;
   @ViewChild('shadowCanvas')
   private shadowCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('ballonCanvas')
@@ -72,7 +74,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private balloonEllipseA!: Zdog.Ellipse;
   private balloonEllipseB!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
-  private currEmotion!: BalloonEmotion;
 
   private growStream$ = new BehaviorSubject<number>(1);
   private emotionStream$ = new Observable<BalloonEmotion>();
@@ -82,12 +83,13 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private mainColor = '#ea173a';
   private inflateColor = '#ea3f5b';
   private shadowColor = '#750B1D';
+  private backColor = '#3d060f';
   private inflateShadowColor = '#75222f';
   private threadColor = '#636';
   private backgroundShadowColor = '#C9C9CA';
   // Dimensions
   private balloonDiameter = 80;
-  private growthFactor = 1.08;
+  private growthFactor = 1.06;
   // Animations
   private animationObject = {
     translateX: 0,
@@ -168,16 +170,22 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.destroy$.next();
   }
 
+  public handleResize(): void {
+    console.log(
+      'here',
+      this.wrapperRef.nativeElement.clientWidth,
+      this.wrapperRef.nativeElement.clientHeight
+    );
+  }
+
   private initializeIllustration(): void {
     this.shadowCanvas = new Zdog.Illustration({
       element: this.shadowCanvasRef.nativeElement,
       resize: true,
-      onResize: this.handleResize.bind(this),
     });
     this.balloonCanvas = new Zdog.Illustration({
       element: this.balloonCanvasRef.nativeElement,
       resize: true,
-      onResize: this.handleResize.bind(this),
     });
     this.explosionCanvas = confetti.create(
       this.canvasConfettiRef.nativeElement,
@@ -186,11 +194,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
         useWorker: true,
       }
     );
-  }
-
-  private handleResize(width: number, height: number): void {
-    const displaySize = Math.min(width, height);
-    const zoom = Math.floor(displaySize / 300);
   }
 
   private drawIllustration(): void {
@@ -222,7 +225,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       diameter: this.balloonDiameter,
       addTo: this.balloonAnchor,
       color: this.inflateAnimationObject.ellipseAColor,
-      backface: this.shadowColor,
       stroke: false,
       translate: { z: this.inflateAnimationObject.ellipseATranslateZ },
     });
@@ -230,7 +232,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.balloonEllipseB = this.balloonEllipseA.copy({
       rotate: { y: this.TAU / 2 },
       color: this.inflateAnimationObject.ellipseBColor,
-      backface: this.inflateAnimationObject.ellipseAColor,
+      backface: this.backColor,
       translate: { z: this.inflateAnimationObject.ellipseBTranslateZ },
     });
     // --- Build Tail ----
@@ -286,17 +288,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateAnimation(): void {
-    if (this.currEmotion !== 'collect') {
-    } else {
-      // this.interpolateKeyframes(
-      //   this.fullRotateKeyframes,
-      //   turn,
-      //   tween,
-      //   (value) => this.balloonAnchor.rotate.set(value)
-      // );
-    }
-    // Animate shadow
-
     this.balloonAnchor.translate.x = this.animationObject.translateX;
     this.balloonAnchor.translate.y = this.animationObject.translateY;
     this.balloonAnchor.rotate.x = this.animationObject.rotateX;
@@ -309,14 +300,12 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       this.inflateAnimationObject.ellipseBTranslateZ;
     this.balloonEllipseA.color = this.inflateAnimationObject.ellipseAColor;
     this.balloonEllipseB.color = this.inflateAnimationObject.ellipseBColor;
-    this.balloonEllipseB.backface = this.inflateAnimationObject.ellipseAColor;
   }
 
   private handleBalloonState(): void {
     this.emotionStream$
       .pipe(withLatestFrom(this.growStream$), takeUntil(this.destroy$))
       .subscribe(([emotion, size]) => {
-        this.currEmotion = emotion;
         this.updateBalloonSize(size);
         this.handleEmotion(emotion);
       });
@@ -331,11 +320,11 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private shootParticles() {
     this.explosionCanvas({
       ...this.particlesDefaults,
-      particleCount: 50,
+      particleCount: 10 * this.growStream$.getValue(),
     });
     this.explosionCanvas({
       ...this.particlesDefaults,
-      particleCount: 50,
+      particleCount: 10 * this.growStream$.getValue(),
       shapes: ['circle'],
     });
   }
