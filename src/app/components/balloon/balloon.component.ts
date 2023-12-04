@@ -32,7 +32,7 @@ export type BalloonEmotion =
   selector: 'app-balloon',
   standalone: true,
   template: `
-    <div #wrapper class="canvasWrapper" (window:resize)="handleResize()">
+    <div #wrapper class="canvasWrapper">
       <canvas #shadowCanvas class="shadowCanvas"></canvas>
       <canvas #ballonCanvas class="balloonCanvas"></canvas>
       <canvas #confettiCanvas class="confettiCanvas"></canvas>
@@ -45,7 +45,7 @@ export type BalloonEmotion =
 })
 export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set size(size: number) {
-    this.growStream$.next(30 + 1); // Score starts at 0 but this is equivalent to the first size
+    this.growStream$.next(size + 1); // Score starts at 0 but this is equivalent to the first size
   }
   @Input() public set emotion(emotion$: Observable<BalloonEmotion>) {
     this.emotionStream$ = emotion$;
@@ -69,11 +69,12 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private shadowCanvas!: Zdog.Illustration;
   private explosionCanvas!: any;
 
+  private mainAnchor!: Zdog.Anchor;
   private balloonAnchor!: Zdog.Anchor;
+  private shadowAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
   private balloonEllipseA!: Zdog.Ellipse;
   private balloonEllipseB!: Zdog.Ellipse;
-  private shadowAnchor!: Zdog.Anchor;
 
   private growStream$ = new BehaviorSubject<number>(1);
   private emotionStream$ = new Observable<BalloonEmotion>();
@@ -88,7 +89,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private threadColor = '#636';
   private backgroundShadowColor = '#C9C9CA';
   // Dimensions
-  private balloonDiameter = 80;
+  private balloonDiameter = 50;
   private growthFactor = 1.06;
   // Animations
   private animationObject = {
@@ -170,14 +171,6 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.destroy$.next();
   }
 
-  public handleResize(): void {
-    console.log(
-      'here',
-      this.wrapperRef.nativeElement.clientWidth,
-      this.wrapperRef.nativeElement.clientHeight
-    );
-  }
-
   private initializeIllustration(): void {
     this.shadowCanvas = new Zdog.Illustration({
       element: this.shadowCanvasRef.nativeElement,
@@ -197,25 +190,26 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawIllustration(): void {
-    // --- Build Shadow ---
-    this.shadowAnchor = new Zdog.Anchor({
-      addTo: this.shadowCanvas,
-      translate: { x: 0, y: 110 },
-    });
-    this.shadow = new Zdog.Ellipse({
-      addTo: this.shadowAnchor,
-      diameter: this.balloonDiameter - 15,
-      fill: true,
-      color: this.backgroundShadowColor,
-      rotate: { x: this.TAU / 3, y: 0, z: 0 },
-      scale: {
-        x: this.animationObject.scaleX,
-        y: this.animationObject.scaleY,
-      },
+    /*
+    mainAnchor
+    ├── balloonAnchor
+    │   ├── balloon
+    │   │   ├── ellipseA
+    │   │   └── ellipseB
+    │   └── tail
+    │       ├── ellipse
+    │       ├── shape
+    │       ├── shape
+    │       └── shape
+    └── shadowAnchor
+        └── shadow
+    */
+    this.mainAnchor = new Zdog.Anchor({
+      addTo: this.balloonCanvas,
     });
     // --- Build Balloon ---
     this.balloonAnchor = new Zdog.Anchor({
-      addTo: this.balloonCanvas,
+      addTo: this.mainAnchor,
       translate: {
         x: this.animationObject.translateX,
         y: this.animationObject.translateY,
@@ -241,12 +235,13 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       diameter: 10,
       stroke: 5,
       color: this.mainColor,
-      translate: { x: 0, y: 40 },
+      translate: { x: 0, y: this.balloonDiameter / 2 },
       rotate: { x: this.TAU / 4, y: 0, z: 0 },
     });
 
     let tail = new Zdog.Group({
       addTo: this.balloonAnchor,
+      translate: { x: 0, y: -this.balloonDiameter / 2 },
     });
     new Zdog.Shape({
       addTo: tail,
@@ -274,6 +269,22 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       ],
       stroke: 4,
       color: this.threadColor,
+    });
+    // --- Build Shadow ---
+    this.shadowAnchor = new Zdog.Anchor({
+      addTo: this.mainAnchor,
+    });
+    this.shadow = new Zdog.Ellipse({
+      addTo: this.mainAnchor,
+      diameter: this.balloonDiameter - 15,
+      fill: true,
+      color: this.backgroundShadowColor,
+      translate: { x: 0, y: this.balloonDiameter + 20 },
+      rotate: { x: this.TAU / 3, y: 0, z: 0 },
+      scale: {
+        x: this.animationObject.scaleX,
+        y: this.animationObject.scaleY,
+      },
     });
   }
 
@@ -313,8 +324,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
 
   private updateBalloonSize(size: number): void {
     const newScale = Math.pow(this.growthFactor, size - 1);
-    this.setAnchorScale(this.shadowAnchor, newScale);
-    this.setAnchorScale(this.balloonAnchor, newScale);
+    this.mainAnchor.scale.set({ x: newScale, y: newScale, z: newScale });
   }
 
   private shootParticles() {
@@ -348,13 +358,13 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
         this.balloonInflateAnimation.play(0);
         break;
       case 'explode':
-        this.removeBalloonFromCanvas();
+        this.hideItemsInCanvas();
         this.shootParticles();
         this.textAnimation('😢');
         break;
       case 'new':
         this.updateBalloonSize(0);
-        this.addBalloonToCanvas();
+        this.showItemsInCanvas();
         break;
       default:
         this.textAnimation('');
@@ -362,16 +372,12 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private setAnchorScale(anchor: Zdog.Anchor, scale: number): void {
-    anchor.scale.set({ x: scale, y: scale, z: scale });
+  private showItemsInCanvas(): void {
+    this.mainAnchor.addChild(this.balloonAnchor);
+    this.mainAnchor.addChild(this.shadowAnchor);
   }
 
-  private addBalloonToCanvas(): void {
-    this.balloonCanvas.addChild(this.balloonAnchor);
-    this.shadowCanvas.addChild(this.shadowAnchor);
-  }
-
-  private removeBalloonFromCanvas(): void {
+  private hideItemsInCanvas(): void {
     this.balloonAnchor.remove();
     this.shadowAnchor.remove();
   }
