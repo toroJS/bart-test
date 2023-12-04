@@ -17,6 +17,7 @@ import {
 } from 'rxjs';
 import Zdog from 'zdog';
 import confetti from 'canvas-confetti';
+import gsap from 'gsap';
 
 export type BalloonEmotion =
   | 'collect'
@@ -36,60 +37,13 @@ export type BalloonEmotion =
       <div #emotionCanvas class="emotionCanvas"></div>
     </div>
   `,
-  styles: [
-    `
-      .canvasWrapper {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        min-width: 300px;
-        min-height: 300px;
-      }
-      .shadowCanvas,
-      .balloonCanvas,
-      .confettiCanvas,
-      .emotionCanvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-      .emotionCanvas {
-        display: flex;
-        justify-content: flex-start;
-        align-items: flex-start;
-      }
-      .emotionCanvas > p {
-        padding-right: 18px;
-        font-size: 70px;
-        font-weight: bold;
-        color: black;
-        font-family: 'sans-serif';
-      }
-      @keyframes moneyAnimation {
-        0% {
-          opacity: 1;
-          bottom: 0;
-        }
-        100% {
-          opacity: 0;
-          bottom: 20%;
-        }
-      }
-      .moneyAnimation {
-        animation: moneyAnimation 1s forwards;
-        position: absolute;
-      }
-    `,
-  ],
+  styleUrl: './balloon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
 export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set size(size: number) {
-    this.growStream$.next(size);
+    this.growStream$.next(size + 1); // Score starts at 0 but this is equivalent to the first size
   }
   @Input() public set emotion(emotion$: Observable<BalloonEmotion>) {
     this.emotionStream$ = emotion$;
@@ -104,51 +58,78 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   private emotionCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   private readonly TAU = Zdog.TAU;
-  private readonly cycleCount = 180;
 
-  private ticker = 0;
   private balloonCanvas!: Zdog.Illustration;
   private shadowCanvas!: Zdog.Illustration;
   private explosionCanvas!: any;
 
   private balloonAnchor!: Zdog.Anchor;
   private shadow!: Zdog.Ellipse;
+  private balloonEllipseA!: Zdog.Ellipse;
+  private balloonEllipseB!: Zdog.Ellipse;
   private shadowAnchor!: Zdog.Anchor;
   private currEmotion!: BalloonEmotion;
 
-  private growStream$ = new BehaviorSubject<number>(0);
+  private growStream$ = new BehaviorSubject<number>(1);
   private emotionStream$ = new Observable<BalloonEmotion>();
   private destroy$ = new Subject<void>();
 
   // Color
   private mainColor = '#ea173a';
+  private inflateColor = '#ea3f5b';
   private shadowColor = '#750B1D';
+  private inflateShadowColor = '#75222f';
   private threadColor = '#636';
   private backgroundShadowColor = '#C9C9CA';
   // Dimensions
   private balloonDiameter = 80;
-  private growthFactor = 1.05;
+  private growthFactor = 1.08;
   // Animations
-  private readonly rotateKeyframes = [
-    { x: 0, y: 0 },
-    { x: -this.TAU * 0.05, y: this.TAU * 0.1 },
-    { x: 0, y: 0 },
-  ];
-  private readonly translateKeyframes = [
-    { x: 0, y: -20 },
-    { x: 0, y: 10 },
-    { x: 0, y: -20 },
-  ];
-  private readonly scaleKeyframes = [
-    { x: 1, y: 1 },
-    { x: 1.2, y: 1.2 },
-    { x: 1, y: 1 },
-  ];
-  private readonly fullRotateKeyframes = [
-    { x: 0, y: 0 },
-    { x: 0, y: this.TAU },
-    { x: 0, y: this.TAU },
-  ];
+  private animationObject = {
+    translateX: 0,
+    translateY: -20,
+    rotateX: -this.TAU * 0.05,
+    rotateY: this.TAU * 0.1,
+    scaleX: 1,
+    scaleY: 1,
+  };
+  private inflateAnimationObject = {
+    ellipseATranslateZ: 0,
+    ellipseBTranslateZ: 0,
+    ellipseAColor: this.mainColor,
+    ellipseBColor: this.shadowColor,
+  };
+
+  private balloonHoverAnimation = gsap
+    .timeline({ repeat: -1 })
+    .to(this.animationObject, {
+      translateY: 10,
+      rotateX: -this.TAU * 0.05,
+      rotateY: this.TAU * 0.2,
+      scaleX: 1.2,
+      scaleY: 1.2,
+    })
+    .to(this.animationObject, { ...this.animationObject });
+
+  private balloonInflateAnimation = gsap
+    .timeline({ repeat: 0 })
+    .to(this.inflateAnimationObject, {
+      ellipseATranslateZ: 4,
+      ellipseBTranslateZ: -4,
+      ellipseAColor: this.inflateColor,
+      ellipseBColor: this.inflateShadowColor,
+    })
+    .to(this.inflateAnimationObject, { ...this.inflateAnimationObject })
+    .pause();
+
+  private balloonCollectAnimation = gsap
+    .timeline({ repeat: 0 })
+    .to(this.animationObject, {
+      rotateY: this.TAU * 1.1,
+    })
+
+    .pause();
+
   // Explosion
   private particlesDefaults = {
     spread: 360,
@@ -207,21 +188,33 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       fill: true,
       color: this.backgroundShadowColor,
       rotate: { x: this.TAU / 3, y: 0, z: 0 },
+      scale: {
+        x: this.animationObject.scaleX,
+        y: this.animationObject.scaleY,
+      },
     });
     // --- Build Balloon ---
     this.balloonAnchor = new Zdog.Anchor({
       addTo: this.balloonCanvas,
+      translate: {
+        x: this.animationObject.translateX,
+        y: this.animationObject.translateY,
+      },
     });
-    new Zdog.Hemisphere({
+    this.balloonEllipseA = new Zdog.Hemisphere({
       diameter: this.balloonDiameter,
       addTo: this.balloonAnchor,
-      color: this.mainColor,
+      color: this.inflateAnimationObject.ellipseAColor,
       backface: this.shadowColor,
       stroke: false,
-    }).copy({
+      translate: { z: this.inflateAnimationObject.ellipseATranslateZ },
+    });
+
+    this.balloonEllipseB = this.balloonEllipseA.copy({
       rotate: { y: this.TAU / 2 },
-      color: this.shadowColor,
-      backface: this.mainColor,
+      color: this.inflateAnimationObject.ellipseBColor,
+      backface: this.inflateAnimationObject.ellipseAColor,
+      translate: { z: this.inflateAnimationObject.ellipseBTranslateZ },
     });
     // --- Build Tail ----
     new Zdog.Ellipse({
@@ -276,33 +269,30 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateAnimation(): void {
-    const turnLimit = this.rotateKeyframes.length - 1;
-    const progress = this.ticker / this.cycleCount;
-    const tween = Zdog.easeInOut(progress % 1, 4);
-    const turn = Math.floor(progress % turnLimit);
-
     if (this.currEmotion !== 'collect') {
-      this.interpolateKeyframes(this.rotateKeyframes, turn, tween, (value) =>
-        this.balloonAnchor.rotate.set(value)
-      );
     } else {
-      this.interpolateKeyframes(
-        this.fullRotateKeyframes,
-        turn,
-        tween,
-        (value) => this.balloonAnchor.rotate.set(value)
-      );
+      // this.interpolateKeyframes(
+      //   this.fullRotateKeyframes,
+      //   turn,
+      //   tween,
+      //   (value) => this.balloonAnchor.rotate.set(value)
+      // );
     }
-    // Animate bounce
-    this.interpolateKeyframes(this.translateKeyframes, turn, tween, (value) =>
-      this.balloonAnchor.translate.set(value)
-    );
     // Animate shadow
-    this.interpolateKeyframes(this.scaleKeyframes, turn, tween, (value) =>
-      this.shadow.scale.set(value)
-    );
 
-    this.ticker++;
+    this.balloonAnchor.translate.x = this.animationObject.translateX;
+    this.balloonAnchor.translate.y = this.animationObject.translateY;
+    this.balloonAnchor.rotate.x = this.animationObject.rotateX;
+    this.balloonAnchor.rotate.y = this.animationObject.rotateY;
+    this.shadow.scale.x = this.animationObject.scaleX;
+    this.shadow.scale.y = this.animationObject.scaleY;
+    this.balloonEllipseA.translate.z =
+      this.inflateAnimationObject.ellipseATranslateZ;
+    this.balloonEllipseB.translate.z =
+      this.inflateAnimationObject.ellipseBTranslateZ;
+    this.balloonEllipseA.color = this.inflateAnimationObject.ellipseAColor;
+    this.balloonEllipseB.color = this.inflateAnimationObject.ellipseBColor;
+    this.balloonEllipseB.backface = this.inflateAnimationObject.ellipseAColor;
   }
 
   private handleBalloonState(): void {
@@ -340,29 +330,18 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     moneyAnimation.classList.add('moneyAnimation'); // Add the class that animates
   }
 
-  private interpolateKeyframes(
-    keyframes: Array<{ x: number; y: number }>,
-    turn: number,
-    tween: number,
-    apply: (value: Zdog.Vector) => void
-  ): void {
-    const keyA = keyframes[turn];
-    const keyB = keyframes[turn + 1] || keyframes[0]; // Loop back to the first keyframe if necessary
-    const interpolatedValue = new Zdog.Vector({
-      x: Zdog.lerp(keyA.x, keyB.x, tween),
-      y: Zdog.lerp(keyA.y, keyB.y, tween),
-    });
-
-    apply(interpolatedValue);
-  }
-
   private handleEmotion(emotion: BalloonEmotion) {
     switch (emotion) {
       case 'collect':
         this.textAnimation('💰');
+        this.balloonHoverAnimation.pause();
+        this.balloonCollectAnimation.play(0).eventCallback('onComplete', () => {
+          this.balloonHoverAnimation.play();
+        });
         break;
       case 'inflate':
         this.textAnimation('🌬️');
+        this.balloonInflateAnimation.play(0);
         break;
       case 'explode':
         this.removeBalloonFromCanvas();
