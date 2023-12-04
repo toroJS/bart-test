@@ -14,7 +14,7 @@ export class GameService {
   user: string = '';
   savedUserId: string = '';
   maxSize = 31;
-  maxRound = 3; // for testing real maxrounds 20
+  maxRound = 10; // for testing real maxrounds 20
 
   savedGameStats: gameStats[] = [];
   sizeExplosionChance = new Map<number, number>([
