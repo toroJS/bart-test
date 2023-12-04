@@ -7,6 +7,8 @@ import {
   Input,
   OnDestroy,
   ViewEncapsulation,
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import {
   BehaviorSubject,
@@ -48,6 +50,8 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
   @Input() public set emotion(emotion$: Observable<BalloonEmotion>) {
     this.emotionStream$ = emotion$;
   }
+  @Output() public animationInProgress$ = new EventEmitter<boolean>();
+
   @ViewChild('shadowCanvas')
   private shadowCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('ballonCanvas')
@@ -120,6 +124,12 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       ellipseBColor: this.inflateShadowColor,
     })
     .to(this.inflateAnimationObject, { ...this.inflateAnimationObject })
+    .eventCallback('onStart', () => {
+      this.animationInProgress$.emit(true);
+    })
+    .eventCallback('onComplete', () => {
+      this.animationInProgress$.emit(false);
+    })
     .pause();
 
   private balloonCollectAnimation = gsap
@@ -127,7 +137,13 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     .to(this.animationObject, {
       rotateY: this.TAU * 1.1,
     })
-
+    .eventCallback('onStart', () => {
+      this.animationInProgress$.emit(true);
+    })
+    .eventCallback('onComplete', () => {
+      this.animationInProgress$.emit(false);
+      this.balloonHoverAnimation.play();
+    })
     .pause();
 
   // Explosion
@@ -145,6 +161,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
     this.drawIllustration();
     this.startAnimation();
     this.handleBalloonState();
+    this.animationInProgress$.emit(false);
   }
 
   ngOnDestroy(): void {
@@ -335,9 +352,7 @@ export class BalloonComponent implements AfterViewInit, OnDestroy {
       case 'collect':
         this.textAnimation('💰');
         this.balloonHoverAnimation.pause();
-        this.balloonCollectAnimation.play(0).eventCallback('onComplete', () => {
-          this.balloonHoverAnimation.play();
-        });
+        this.balloonCollectAnimation.play(0);
         break;
       case 'inflate':
         this.textAnimation('🌬️');
