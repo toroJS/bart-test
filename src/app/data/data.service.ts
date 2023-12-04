@@ -80,8 +80,6 @@ export class DataService {
   }
 
   getTopScoresOfAllTime(userStats: RankedPlayer) {
-    console.log(userStats);
-
     const resultsCollection = collection(this.db, 'results');
     return from(
       getDocs(query(resultsCollection, orderBy('totalScore', 'desc'), limit(5)))
@@ -104,8 +102,6 @@ export class DataService {
           index = index + 1;
           results.push(player);
         });
-        console.log(results);
-        console.log();
 
         if (
           !results.map((player) => player.userId).includes(userStats.userId)

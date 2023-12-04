@@ -163,13 +163,18 @@ export class GameService {
   }
 
   saveStatsInDb() {
+    const burstedBalloons = this.savedGameStats.filter(
+      (stats) => stats.bursted
+    ).length;
+    const avg = this.userAvarageScore();
+    const totalScore = this.getTotalScore();
     this.dataService
       .saveUserResults(
         this.user,
-        this.getTotalScore(),
-        this.userAvarageScore(),
+        totalScore,
+        avg,
         this.maxRound,
-        this.savedGameStats.filter((stats) => stats.bursted).length,
+        burstedBalloons,
         this.savedGameStats
       )
       .then((docRef) => {
@@ -178,10 +183,9 @@ export class GameService {
             rank: '🏆',
             userId: docRef.id,
             user: this.user,
-            score: this.getTotalScore(),
-            avg: this.userAvarageScore(),
-            bursted: this.savedGameStats.filter((stats) => stats.bursted)
-              .length,
+            score: totalScore,
+            avg: avg,
+            bursted: burstedBalloons,
           })
           .subscribe((rankedData) => this.rankedDataSubject$.next(rankedData));
       });
