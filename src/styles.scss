@@ -2,6 +2,9 @@ html, body { height: 100%; }
 body {
     margin: 0;
     font-family: 'Nunito Sans', sans-serif !important;
+    background-color: #fcfcfd;
+    --white-grad-1: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);
+    background: var(--white-grad-1);
 }
 
 .mat-typography {

@@ -35,13 +35,7 @@ export class DataService {
     this.db = getFirestore(app);
   }
 
-  async saveUserResults(username: string, score: gameStats[]) {
-    await addDoc(collection(this.db, 'results'), {
-      createdAt: Timestamp.fromDate(new Date()),
-      score: score,
-      user: username,
-    });
-  }
+  async saveUserResults(username: string, score: gameStats[]) {}
 
   getAllStats() {
     return from(getDocs(collection(this.db, 'results'))).pipe(
