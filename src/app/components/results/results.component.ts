@@ -57,7 +57,7 @@ export class ResultsComponent implements AfterViewInit {
     this.user = gameService.user;
     const results = gameService.savedGameStats;
     this.dataSource = [
-      { rank: 1, user: 'user1', score: 12, avg: 34, bursted: 4 },
+      { rank: 1, user: '🏆 user1', score: 12, avg: 34, bursted: 4 },
       { rank: 2, user: 'user1', score: 12, avg: 34, bursted: 4 },
       { rank: 3, user: 'user1212324324', score: 12, avg: 34, bursted: 4 },
       { rank: 4, user: 'sd', score: 12, avg: 34, bursted: 4 },
