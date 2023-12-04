@@ -37,9 +37,10 @@
       style="width: 100%"
       (click)="onButtonClick(ACTIONTYPE.FINISH)"
     >
-      See results
+      See results!
     </button>
-    } @else { @if(roundEnd$ | async){
+    }
+     @else if(roundEnd$ | async){
     <button
       [disabled]="disable"
       mat-flat-button
@@ -52,7 +53,7 @@
     }
     <div class="gameActions__play">
       <button
-        [disabled]="disable || (roundEnd$ | async)"
+        [disabled]="disable || (roundEnd$ | async) || (gameEnd$ | async)"
         mat-flat-button
         color="accent"
         style="width: 50%"
@@ -62,7 +63,7 @@
       </button>
       <button
         [disabled]="
-          disable || ((balloonSize$ | async) ?? 0) < 1 || (roundEnd$ | async)
+          disable || ((balloonSize$ | async) ?? 0) < 1 || (roundEnd$ | async) || (gameEnd$ | async)
         "
         mat-flat-button
         color="primary"
@@ -72,6 +73,6 @@
         Collect <strong> (+ {{ balloonSize$ | async }})</strong>
       </button>
     </div>
-    }
+
   </div>
 </div>
