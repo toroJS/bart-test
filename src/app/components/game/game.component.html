@@ -25,6 +25,7 @@
   <app-balloon
     [size]="(balloonSize$ | async) ?? 1"
     [emotion]="emotion$"
+    (animationInProgress$)="handleAnimationInProgress($event)"
   ></app-balloon>
 
   <div class="gameActions">

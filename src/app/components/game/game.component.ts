@@ -78,7 +78,6 @@ export class GameComponent implements OnDestroy {
     this.clickSubject
       .pipe(takeUntil(this.destroy$))
       .subscribe((action: ACTION) => {
-        this.disable = true;
         switch (action) {
           case ACTION.PUMP:
             this.emotionSubject.next('inflate');
@@ -100,9 +99,6 @@ export class GameComponent implements OnDestroy {
           default:
             break;
         }
-        setTimeout(() => {
-          this.disable = false;
-        }, 180);
       });
   }
 
@@ -127,5 +123,9 @@ export class GameComponent implements OnDestroy {
 
   private nextRound() {
     this.gameService.nextRound();
+  }
+
+  handleAnimationInProgress(animating: boolean) {
+    this.disable = animating;
   }
 }
