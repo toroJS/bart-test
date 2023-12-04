@@ -180,7 +180,7 @@ export class GameService {
       .then((docRef) => {
         this.dataService
           .getTopScoresOfAllTime({
-            rank: '🏆',
+            rank: '🔻',
             userId: docRef.id,
             user: this.user,
             score: totalScore,
