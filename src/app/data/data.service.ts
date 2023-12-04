@@ -6,8 +6,12 @@ import {
   Timestamp,
   addDoc,
   collection,
+  doc,
   getDocs,
   getFirestore,
+  limit,
+  orderBy,
+  query,
 } from 'firebase/firestore';
 import { gameStats } from '../components/game/game.service';
 import { from, map } from 'rxjs';
@@ -35,7 +39,24 @@ export class DataService {
     this.db = getFirestore(app);
   }
 
-  async saveUserResults(username: string, score: gameStats[]) {}
+  async saveUserResults(
+    username: string,
+    totalScore: number,
+    avgScore: number,
+    numberRounds: number,
+    burstedBalloons: number,
+    score: gameStats[]
+  ) {
+    await addDoc(collection(this.db, 'results'), {
+      createdAt: Timestamp.fromDate(new Date()),
+      totalScore: totalScore,
+      avgScore: avgScore,
+      numberOfBurstedBalloons: burstedBalloons,
+      numberofRounds: numberRounds,
+      score: score,
+      user: username,
+    });
+  }
 
   getAllStats() {
     return from(getDocs(collection(this.db, 'results'))).pipe(
@@ -54,5 +75,24 @@ export class DataService {
     //   console.log(doc.id, ' => ', doc.data());
     //   results.push(doc.data());
     // });
+  }
+
+  gettopScoresOfAllTime() {
+    const resultsCollection = collection(this.db, 'results');
+    return from(
+      getDocs(query(resultsCollection, orderBy('totalScore', 'desc'), limit(5)))
+    ).pipe(
+      map((res) => {
+        const results: any = [];
+        res.forEach((element) => {
+          results.push(element.data());
+        });
+        return results;
+      })
+    );
+
+    // return from(
+    //   getDocs(collection(this.db, 'results').orderBy('createdAt', 'desc'))
+    // )
   }
 }

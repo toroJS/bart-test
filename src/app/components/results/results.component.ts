@@ -81,8 +81,8 @@ export class ResultsComponent implements AfterViewInit {
   }
 
   public handleRestart(): void {
+    this.gameService.restartGame();
     this.router.navigate(['/home']);
-    // TODO: restart user game state
   }
 
   // getDocs() {

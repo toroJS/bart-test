@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { DataService } from '../../data/data.service';
 
 export interface gameStats {
@@ -13,7 +13,7 @@ export interface gameStats {
 export class GameService {
   user: string = '';
   maxSize = 31;
-  maxRound = 1; // for testing real maxrounds 20
+  maxRound = 3; // for testing real maxrounds 20
 
   savedGameStats: gameStats[] = [];
   sizeExplosionChance = new Map<number, number>([
@@ -67,13 +67,7 @@ export class GameService {
   roundEnd$ = this.roundEndSubject.asObservable();
 
   private gameEndSubject$ = new BehaviorSubject<boolean>(false);
-  gameEnd$ = this.gameEndSubject$.asObservable().pipe(
-    tap((end) => {
-      if (end) {
-        this.dataService.saveUserResults(this.user, this.savedGameStats);
-      }
-    })
-  );
+  gameEnd$ = this.gameEndSubject$.asObservable();
 
   constructor(private dataService: DataService) {}
 
@@ -100,9 +94,8 @@ export class GameService {
           bursted: this.burstSubject.value,
         });
 
-        console.log(this.savedGameStats);
-
         this.gameEndSubject$.next(true);
+        this.saveStatsInDb();
       }
       return;
     }
@@ -119,8 +112,8 @@ export class GameService {
         bursted: this.burstSubject.value,
       });
 
-      console.log(this.savedGameStats);
       this.gameEndSubject$.next(true);
+      this.saveStatsInDb();
       return;
     }
     this.roundEndSubject.next(true);
@@ -142,6 +135,10 @@ export class GameService {
     this.balloonSizeSubject.next(0);
   }
 
+  getTotalScore(): number {
+    return this.totalPointsSubject$.value;
+  }
+
   userAvarageScore() {
     const pointsPerRound = this.savedGameStats
       .filter((stats) => !stats.bursted)
@@ -153,6 +150,30 @@ export class GameService {
       initialValue
     );
 
-    return sumWithInitial / numberOfNonBurstedBalloons;
+    return (
+      Math.floor((sumWithInitial / numberOfNonBurstedBalloons) * 100) / 100
+    );
+  }
+
+  saveStatsInDb() {
+    this.dataService.saveUserResults(
+      this.user,
+      this.getTotalScore(),
+      this.userAvarageScore(),
+      this.maxRound,
+      this.savedGameStats.filter((stats) => stats.bursted).length,
+      this.savedGameStats
+    );
+  }
+
+  restartGame() {
+    this.user = '';
+    this.savedGameStats = [];
+    this.totalPointsSubject$.next(0);
+    this.roundSubject$.next(1);
+    this.balloonSizeSubject.next(0);
+    this.burstSubject.next(false);
+    this.roundEndSubject.next(false);
+    this.gameEndSubject$.next(false);
   }
 }
