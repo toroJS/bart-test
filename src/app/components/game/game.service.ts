@@ -139,4 +139,18 @@ export class GameService {
     this.burstSubject.next(false);
     this.balloonSizeSubject.next(0);
   }
+
+  userAvarageScore() {
+    const pointsPerRound = this.savedGameStats
+      .filter((stats) => !stats.bursted)
+      .map((stats) => stats.clicks);
+    const numberOfNonBurstedBalloons = pointsPerRound.length;
+    const initialValue = 0;
+    const sumWithInitial = pointsPerRound.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      initialValue
+    );
+
+    return sumWithInitial / numberOfNonBurstedBalloons;
+  }
 }
