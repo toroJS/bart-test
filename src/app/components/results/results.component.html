@@ -1,22 +1,27 @@
 <div class="resultsWrapper">
-
-  <h1>🎉 Well done! <strong>{{ user }}</strong></h1>
+  <h1>
+    🎉 Well done! <strong>{{ user }}</strong>
+  </h1>
 
   <mat-card>
     <mat-card-header>
       <mat-card-title>Top 5</mat-card-title>
       <mat-card-subtitle>Here is the leader board</mat-card-subtitle>
     </mat-card-header>
-    <mat-card-content class="tableWrapper ">
-      <table mat-table [dataSource]="dataSource" class="mat-elevation-z0">
+    <mat-card-content class="tableWrapper">
+      <table
+        mat-table
+        [dataSource]="(dataSource | async) ?? []"
+        class="mat-elevation-z0"
+      >
         <!-- User Column -->
         <ng-container matColumnDef="rank" sticky>
-          <th mat-header-cell *matHeaderCellDef>No. </th>
+          <th mat-header-cell *matHeaderCellDef>No.</th>
           <td mat-cell *matCellDef="let element">
             @if(element.user === user){
-              <strong>{{element.rank}}</strong>
+            <strong>{{ element.rank }}</strong>
             } @else {
-              {{element.rank}}
+            {{ element.rank }}
             }
           </td>
         </ng-container>
@@ -25,9 +30,9 @@
           <th mat-header-cell *matHeaderCellDef>User</th>
           <td mat-cell *matCellDef="let element" [title]="element.user">
             @if(element.user === user){
-              <strong>{{element.user}}</strong>
+            <strong>{{ element.user }}</strong>
             } @else {
-              {{element.user}}
+            {{ element.user }}
             }
           </td>
         </ng-container>
@@ -36,9 +41,9 @@
           <th mat-header-cell *matHeaderCellDef>Total Score</th>
           <td mat-cell *matCellDef="let element">
             @if(element.user === user){
-              <strong>{{element.score}}</strong>
+            <strong>{{ element.score }}</strong>
             } @else {
-              {{element.score}}
+            {{ element.score }}
             }
           </td>
         </ng-container>
@@ -47,9 +52,9 @@
           <th mat-header-cell *matHeaderCellDef>Avg. round</th>
           <td mat-cell *matCellDef="let element">
             @if(element.user === user){
-              <strong>{{element.avg}}</strong>
+            <strong>{{ element.avg }}</strong>
             } @else {
-              {{element.avg}}
+            {{ element.avg }}
             }
           </td>
         </ng-container>
@@ -58,14 +63,14 @@
           <th mat-header-cell *matHeaderCellDef>Bursted balloons</th>
           <td mat-cell *matCellDef="let element">
             @if(element.user === user){
-              <strong>{{element.rank}}</strong>
+            <strong>{{ element.rank }}</strong>
             } @else {
-              {{element.rank}}
+            {{ element.rank }}
             }
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
     </mat-card-content>
   </mat-card>
@@ -73,10 +78,10 @@
   <button
     mat-flat-button
     color="primary"
-    style="width: 100%; margin-top: 18px;"
+    style="width: 100%; margin-top: 18px"
     (click)="handleRestart()"
-    >
-      Play again!
+  >
+    Play again!
   </button>
 </div>
 

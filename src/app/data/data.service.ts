@@ -28,6 +28,14 @@ export interface Score {
   numberOfBursts: number;
 }
 
+export interface RankedPlayer {
+  rank: number;
+  user: string;
+  score: number;
+  avg: number;
+  bursted: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -68,31 +76,31 @@ export class DataService {
         return results;
       })
     );
-    // const querySnapshot = await getDocs(collection(this.db, 'results'));
-    // const results = [];
-    // querySnapshot.forEach((doc) => {
-    //   // doc.data() is never undefined for query doc snapshots
-    //   console.log(doc.id, ' => ', doc.data());
-    //   results.push(doc.data());
-    // });
   }
 
-  gettopScoresOfAllTime() {
+  getTopScoresOfAllTime() {
     const resultsCollection = collection(this.db, 'results');
     return from(
       getDocs(query(resultsCollection, orderBy('totalScore', 'desc'), limit(5)))
     ).pipe(
       map((res) => {
-        const results: any = [];
+        const results: RankedPlayer[] = [];
+        let index = 1;
         res.forEach((element) => {
-          results.push(element.data());
+          const { totalScore, avgScore, numberOfBurstedBalloons, user } =
+            element.data();
+          const player = {
+            rank: index,
+            user: user,
+            score: totalScore,
+            avg: avgScore,
+            bursted: numberOfBurstedBalloons,
+          } as RankedPlayer;
+          index = index + 1;
+          results.push(player);
         });
         return results;
       })
     );
-
-    // return from(
-    //   getDocs(collection(this.db, 'results').orderBy('createdAt', 'desc'))
-    // )
   }
 }

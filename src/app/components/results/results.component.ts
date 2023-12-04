@@ -39,13 +39,7 @@ export class ResultsComponent implements AfterViewInit {
   totalRounds = this.gameService.maxRound;
   userAverageScore!: number;
   displayedColumns: string[] = ['rank', 'user', 'score', 'avg', 'bursted'];
-  dataSource: Array<{
-    rank: number;
-    user: string;
-    score: number;
-    avg: number;
-    bursted: number;
-  }> = [];
+  dataSource = this.dataService.getTopScoresOfAllTime();
 
   @ViewChild('confettiCanvas')
   private canvasConfettiRef!: ElementRef<HTMLCanvasElement>;
@@ -58,13 +52,6 @@ export class ResultsComponent implements AfterViewInit {
   ) {
     this.user = gameService.user;
     const results = gameService.savedGameStats;
-    this.dataSource = [
-      { rank: 1, user: '🏆 user1', score: 12, avg: 34, bursted: 4 },
-      { rank: 2, user: 'user1', score: 12, avg: 34, bursted: 4 },
-      { rank: 3, user: 'user1212324324', score: 12, avg: 34, bursted: 4 },
-      { rank: 4, user: 'sd', score: 12, avg: 34, bursted: 4 },
-      { rank: 10, user: 'user1', score: 12, avg: 34, bursted: 4 },
-    ];
   }
 
   ngAfterViewInit(): void {
