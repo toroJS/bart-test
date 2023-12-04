@@ -1,5 +1,6 @@
 <div class="gameWrapper">
   <mat-card class="gameScorecard">
+
     <mat-card-header class="gameScore">
       <!-- TODO: Add user name -->
       <mat-card-subtitle
@@ -30,47 +31,48 @@
   ></app-balloon>
 
   <div class="gameActions">
-    @if(gameEnd$ | async) {
-    <button
-      mat-flat-button
-      color="primary"
-      style="width: 100%"
-      (click)="onButtonClick(ACTIONTYPE.FINISH)"
-    >
-      See results
-    </button>
-    } @else if(roundEnd$ | async){
-    <button
-      [disabled]="disable"
-      mat-flat-button
-      color="primary"
-      style="width: 100%"
-      (click)="onButtonClick(ACTIONTYPE.NEXT_ROUND)"
-    >
-      Next round
-    </button>
-    } @else {
-
-    <button
-      [disabled]="disable"
-      mat-flat-button
-      color="accent"
-      style="width: 50%"
-      (click)="onButtonClick(ACTIONTYPE.PUMP)"
-    >
-      Inflate
-    </button>
-
-    @if((( balloonSize$ | async) ?? 0) > 0) {
-    <button
-      [disabled]="disable"
-      mat-flat-button
-      color="primary"
-      style="width: 50%"
-      (click)="onButtonClick(ACTIONTYPE.COLLECT)"
-    >
-      Collect <strong> (+ {{ balloonSize$ | async }})</strong>
-    </button>
-    } }
+     @if(gameEnd$ | async) {
+      <button
+        mat-flat-button
+        color="primary"
+        style="width: 100%"
+        (click)="onButtonClick(ACTIONTYPE.FINISH)"
+      >
+        See results
+      </button>
+     }
+     @else {
+      @if(roundEnd$ | async){
+        <button
+          [disabled]="disable"
+          mat-flat-button
+          color="primary"
+          style="width: 100%"
+          (click)="onButtonClick(ACTIONTYPE.NEXT_ROUND)"
+        >
+          Next round
+        </button>
+      }
+      <div class="gameActions__play">
+        <button
+          [disabled]="disable || (roundEnd$ | async)"
+          mat-flat-button
+          color="accent"
+          style="width: 50%"
+          (click)="onButtonClick(ACTIONTYPE.PUMP)"
+        >
+          Inflate
+        </button>
+        <button
+          [disabled]="disable || (( balloonSize$ | async) ?? 0) < 1 || (roundEnd$ | async)"
+          mat-flat-button
+          color="primary"
+          style="width: 50%"
+          (click)="onButtonClick(ACTIONTYPE.COLLECT)"
+        >
+          Collect <strong> (+ {{ balloonSize$ | async }})</strong>
+        </button>
+      </div>
+     }
   </div>
 </div>
