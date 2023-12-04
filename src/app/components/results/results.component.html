@@ -1,11 +1,24 @@
 <div class="resultsWrapper">
-  <h1>Results</h1>
-  <p>{{ user }}</p>
-  <p>Total points {{ totalPoints$ | async }}💰</p>
-  <p>
-    Bursted Baloons 🎈 {{ this.numberOfBurstedBaloons }} out of
-    {{ totalRounds }}
-  </p>
-  <p>Avarage Points per round {{ userAvarageScore }}</p>
-  <!-- <button (click)="getDocs()">get docs</button> -->
+  <mat-card class="example-card">
+    <mat-card-header>
+      <mat-card-title>Results</mat-card-title>
+      <mat-card-subtitle>User: <strong>{{ user }}</strong></mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-list>
+      @for (element of dataSource; track element) {
+        <mat-list-item>{{element.category}}: {{element.value}}</mat-list-item>
+        @if (!$last) {
+          <mat-divider></mat-divider>
+       }
+      }
+      </mat-list>
+      <!-- <button (click)="getDocs()">get docs</button> -->
+      <mat-divider></mat-divider>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button style="width: 100%;" (click)="handleRestart()">Start again</button>
+    </mat-card-actions>
+  </mat-card>
+
 </div>

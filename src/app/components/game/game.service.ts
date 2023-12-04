@@ -13,7 +13,7 @@ export interface gameStats {
 export class GameService {
   user: string = '';
   maxSize = 31;
-  maxRound = 20; // for testing real maxrounds 20
+  maxRound = 1; // for testing real maxrounds 20
 
   savedGameStats: gameStats[] = [];
   sizeExplosionChance = new Map<number, number>([
